@@ -42,7 +42,7 @@ def generate_analysis(summary_str: str):
             model='gemini-2.5-pro',
             contents=prompt,
             config=types.GenerateContentConfig(
-                temperature=0.2
+                temperature=0.3
             )
         )
         
