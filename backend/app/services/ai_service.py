@@ -1,18 +1,19 @@
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import json
 from app.config import settings
 
+client = None
 if settings.GOOGLE_API_KEY:
-    genai.configure(api_key=settings.GOOGLE_API_KEY)
+    client = genai.Client(api_key=settings.GOOGLE_API_KEY)
 
 def generate_analysis(summary_str: str):
-    print("--- INICIANDO LLAMADA A GEMINI ---")
+    print("--- INICIANDO LLAMADA A GEMINI (NUEVA SDK) ---")
     
-    try:
-        model = genai.GenerativeModel('models/gemini-2.5-pro')
-    except:
-        model = genai.GenerativeModel('gemini-pro')
-    
+    if not client:
+        print("Error: No se encontró GOOGLE_API_KEY")
+        return {"suggestions": []}
+
     prompt = f"""
     Actúa como un Analista de Datos experto.
     Analiza el siguiente resumen estadístico de un dataset y sugiere de 3 a 5 visualizaciones.
@@ -22,8 +23,7 @@ def generate_analysis(summary_str: str):
 
     REQUISITO DE SALIDA (ESTRICTO):
     Debes devolver un JSON válido con una lista llamada "suggestions".
-    Cada sugerencia DEBE tener exactamente esta estructura anidada para cumplir con la API del frontend:
-
+    Cada sugerencia DEBE tener exactamente esta estructura:
     {{
         "title": "Título del gráfico",
         "chart_type": "bar" (o "line", "pie", "scatter"),
@@ -31,17 +31,21 @@ def generate_analysis(summary_str: str):
             "x_axis": "Nombre EXACTO de la columna para el eje X",
             "y_axis": "Nombre EXACTO de la columna para el eje Y"
         }},
-        "insight": "Breve análisis de texto explicando el hallazgo."
+        "insight": "Breve análisis de texto."
     }}
 
-    IMPORTANTE: 
-    1. La clave "parameters" es OBLIGATORIA.
-    2. No inventes nombres de columnas, usa las que aparecen en el resumen.
-    3. Devuelve SOLO el JSON sin bloques de código markdown.
+    IMPORTANTE: Devuelve SOLO el JSON sin bloques de código markdown (```json).
     """
     
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.5-pro',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.2
+            )
+        )
+        
         print("Respuesta IA recibida.")
         
         text = response.text.replace("```json", "").replace("```", "").strip()
@@ -49,4 +53,5 @@ def generate_analysis(summary_str: str):
 
     except Exception as e:
         print(f"Error IA: {str(e)}")
+
         return {"suggestions": []}
