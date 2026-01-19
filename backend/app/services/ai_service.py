@@ -29,7 +29,8 @@ def generate_analysis(summary_str: str):
         "chart_type": "bar" (o "line", "pie", "scatter"),
         "parameters": {{
             "x_axis": "Nombre EXACTO de la columna para el eje X",
-            "y_axis": "Nombre EXACTO de la columna para el eje Y"
+            "y_axis": "Nombre EXACTO de la columna para el eje Y",
+            "aggregation": "sum" | "avg" | "count" (opcional, por defecto sum)
         }},
         "insight": "Breve análisis de texto."
     }}
